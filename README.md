@@ -1,3 +1,5 @@
+Cloned by Kriz Tahimic
+
 # Measuring Coding Challenge Competence With APPS
 This is the repository for [Measuring Coding Challenge Competence With APPS](https://arxiv.org/pdf/2105.09938) by
 [Dan Hendrycks\*](https://danhendrycks.com/), [Steven Basart\*](https://stevenbas.art), [Saurav Kadavath](http://www.sauravkadavath.com), Mantas Mazeika, [Akul Arora](https://github.com/akulaarora), Ethan Guo, [Collin Burns](http://collinpburns.com), Samir Puranik, [Horace He](http://horace.io), [Dawn Song](https://people.eecs.berkeley.edu/~dawnsong/), and [Jacob Steinhardt](https://www.stat.berkeley.edu/~jsteinhardt/).
