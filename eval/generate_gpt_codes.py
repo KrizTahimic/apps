@@ -70,6 +70,7 @@ def generate_prompt(args, test_case, prompt, solutions, tokenizer, starter_code=
     
     _input += "\nANSWER:\n"
 
+    # The peeking mechanism allows researchers to test how models perform when given varying amounts of solution hints, which can help measure a model's ability to complete partial solutions.
     if args.peeking > 0.0:
         # Need to do some peeking. 
 
@@ -102,22 +103,25 @@ def generate_prompt(args, test_case, prompt, solutions, tokenizer, starter_code=
 def main(args):
 
     argsdict = vars(args)
-    print(pprint.pformat(argsdict))
+    print(pprint.pformat(argsdict)) # print all arguments
 
-    problems = load_dataset("codeparrot/apps", split=f"{args.split}")
+    # Load the dataset
+    problems = load_dataset("codeparrot/apps", split=f"{args.split}", trust_remote_code=True)
 
+    # Check if the dataset is loaded correctly
     gpt_codes = {}
     if not os.path.exists(args.save):
         os.makedirs(args.save, exist_ok=True)
     if not args.end:
-        codes_loc = os.path.join(args.save, f"all_codes.json")
+        codes_loc = os.path.join(args.save, f"all_codes.json") # if no end is specified, save all codes
     else:
-        codes_loc = os.path.join(args.save, f"{args.start}-{args.end}_codes.json")
+        codes_loc = os.path.join(args.save, f"{args.start}-{args.end}_codes.json") # if end is specified, save only those codes
 
     # Only do the problems that are specified.
     if args.index:
-        problems = load_dataset("codeparrot/apps", split=f"{args.split}[{args.index}]")
+        problems = load_dataset("codeparrot/apps", split=f"{args.split}[{args.index}]") # load only the specified index
     else:
+        # Save code only for the specified range
         if args.start > len(problems) or args.start < 0:
             print(f"start index {args.start} > number of problems {len(problems)}")
             return
@@ -129,7 +133,14 @@ def main(args):
         problems = load_dataset("codeparrot/apps", split=f"{args.split}[{start}:{end}]")
 
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Set up the device
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
     
     if args.load:
         # Set up model
@@ -145,8 +156,38 @@ def main(args):
 
     # main eval loop
     for index, problem in enumerate(tqdm(problems)):
-        problem["solutions"] = json.loads(problem["solutions"])
+        # if index >= 10:  # Stop after 10 iterations
+        #     break
+
+        # problem["solutions"] = json.loads(problem["solutions"])
         problem["input_output"] = json.loads(problem["input_output"])
+
+        # Handle solutions field - check if it's a string before parsing
+        if isinstance(problem["solutions"], str):
+            try:
+                problem["solutions"] = json.loads(problem["solutions"])
+                # print(f"Solutions value: '{problem['solutions']}'")
+            except json.JSONDecodeError as e:
+                if args.debug:
+                    print(f"Error parsing solutions for problem {index}: {e}")
+                    print(f"Solutions value: '{problem['solutions']}'")
+                # Default to empty list if parsing fails
+                problem["solutions"] = [""]
+                print(f"Error parsing solutions for problem {index}: {e}")
+                print(f"Solutions value: '{problem['solutions']}'")
+                # exit() 
+        
+        # # Handle input_output field - check if it's a string before parsing
+        # if isinstance(problem["input_output"], str):
+        #     try:
+        #         problem["input_output"] = json.loads(problem["input_output"])
+        #     except json.JSONDecodeError as e:
+        #         if args.debug:
+        #             print(f"Error parsing input_output for problem {index}: {e}")
+        #             print(f"Input/Output value: '{problem['input_output']}'")
+        #         # Default to empty dict if parsing fails
+        #         problem["input_output"] = {}
+
         test_case = problem["input_output"]
         prompt = problem["question"]
         starter_code = problem["starter_code"]
