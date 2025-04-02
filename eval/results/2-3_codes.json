@@ -1,1 +1,1 @@
-{"2": "\nIn the first example next lucky year is 5. In the second one \u2014 300. In the third one \u2014 5000. Use Standard Input format\n\n"}
+{"2": "def main():\n s = input()\n n = len(s)\n t = int(str(int(s[0]) + 1) + '0' * (n - 1))\n\n print(t - int(s))\n\nmain()\n"}

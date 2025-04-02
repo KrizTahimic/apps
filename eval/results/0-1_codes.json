@@ -1,0 +1,1 @@
+{"0": "import sys\n\ns = sys.stdin.readline().strip()\n\nif not s:\n    sys.stdout.write(\"-1\\n\")\n    sys.exit(0)\n\nans = 0\nfor i in range(len(s)):\n    if s[i] == '[' or s[i] == ']' or s[i] == ':' or s[i] == '|':\n        ans = max(ans, i + 1)\n\nsys.stdout.write(str(ans) + '\\n')\n"}

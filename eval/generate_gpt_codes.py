@@ -69,6 +69,8 @@ def generate_prompt(args, test_case, prompt, solutions, tokenizer, starter_code=
         _input += "\nUse Call-Based format"#\n"
     
     _input += "\nANSWER:\n"
+    _input += "\n# Start Your Python Code Here:\n"
+
 
     # The peeking mechanism allows researchers to test how models perform when given varying amounts of solution hints, which can help measure a model's ability to complete partial solutions.
     if args.peeking > 0.0:
@@ -210,7 +212,9 @@ def main(args):
                     input_ids,
                     num_beams=args.num_beams,
                     early_stopping=True,
-                    max_length=1024 - len(input_ids)
+                    max_length=1024 - len(input_ids), 
+                    # temperature=0.0 # for deterministic output
+                    # do_sample=True,
                 )
                 output_str = tokenizer.decode(output_ids[0])
         except Exception as e:
@@ -229,7 +233,9 @@ def main(args):
         if args.peeking == 1.0:
             output_str = sample_sol
         elif len(output_str):
-            output_str = output_str.split("ANSWER:\n")[1].replace("<|endoftext|>", "")
+            # output_str = output_str.split("ANSWER:\n\n# Start Your Python Code Here:\n")[1].replace("<|endoftext|>", "")
+            output_str = output_str.split("ANSWER:\n\n# Start Your Python Code Here:\n")[1].replace("<eos>", "")
+            
 
         # Save the generated sol
         gpt_codes[index+args.start] = output_str
@@ -248,7 +254,9 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Run a tranined model to generate Python code.")
-    parser.add_argument("--arch", default="gpt2")
+    # parser.add_argument("--arch", default="gpt2")
+    parser.add_argument("--arch", default="google/gemma-2-2b")
+
     parser.add_argument("-t","--test_loc", default="~/apps/data_split/test.json", type=str, help="path to the test folder.")
     parser.add_argument("-r","--root", default="../", type=str, help="where the data is stored.")
     parser.add_argument("-l","--load", default="", type=str)

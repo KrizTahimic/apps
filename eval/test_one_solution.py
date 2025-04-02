@@ -23,6 +23,7 @@ EXAMPLE_RESULTS = {"0": [[-2]],"1": [[False,False,False]],"2": [[True,True]],"3"
 EXAMPLE_ARGS = SimpleNamespace(debug=True)
 TIMEOUT = 10
 
+# P
 def print_results(results: Dict, args:argparse.Namespace=None):
     """
     Given the results evaluated against the testcases we output some statistics.
@@ -60,22 +61,24 @@ def run_test(problem, test, debug):
     time.sleep(1)  # Simulate some work
     return [1]  # Dummy test result
 
+# Moved out of the multiprocessing function to avoid pickling issues.
+def _temp_run(problem, generation, debug, result):
+    try:
+        if debug:
+            print(f"Running test for problem: {problem}")
+        result.append(test_util.run_test(problem=problem, test=generation, debug=debug))
+        # Useful for debugging the multiprocessing.
+        # result.append(run_test(problem=problem, test=generation, debug=debug))
+        if debug:
+            print(f"Test completed with result: {result}")
+    except Exception as e:
+        if debug:
+            print(f"Error in _temp_run: {e}")
+
 def check_correctness(problem, generation, timeout, debug):
     """Check correctness of code generation with a global timeout.
     The global timeout is to catch some extreme/rare cases not handled by the timeouts
     inside `run_test`"""
-    def _temp_run(problem, generation, debug, result):
-        try:
-            if debug:
-                print(f"Running test for problem: {problem}")
-            result.append(test_util.run_test(problem=problem, test=generation, debug=debug))
-            # Useful for debugging the multiprocessing.
-            # result.append(run_test(problem=problem, test=generation, debug=debug))
-            if debug:
-                print(f"Test completed with result: {result}")
-        except Exception as e:
-            if debug:
-                print(f"Error in _temp_run: {e}")
 
     manager = multiprocessing.Manager()
     result = manager.list()
@@ -150,6 +153,7 @@ def eval_and_save_problems(args):
         problem["input_output"] = json.loads(problem["input_output"])
         sols = problem["solutions"]
 
+        # 
         if not os.path.exists(args.save):
             os.makedirs(args.save)
 
